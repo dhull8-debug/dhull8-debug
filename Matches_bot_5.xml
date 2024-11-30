@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tradingStrategy>
+    <name>DigitMatchTrader</name>
+    <description>Trades based on digit matches in price movements with same stake recovery.</description>
+    <parameters>
+        <parameter name="matchThreshold" type="integer" value="3"/>
+        <parameter name="tradeAmount" type="float" value="100.0"/>
+        <parameter name="currency" value="USD"/>
+        <parameter name="timeFrame" value="1m"/>
+        <parameter name="maxLossesBeforeRecovery" type="integer" value="3"/>
+    </parameters>
+    <state>
+        <lossCount>0</lossCount>
+    </state>
+    <rules>
+        <rule>
+            <condition>
+                <description>Check if the last digit of the current price matches the last digit of the previous price.</description>
+                <type>digitMatch</type>
+                <previousPrice>previousPrice</previousPrice>
+                <currentPrice>currentPrice</currentPrice>
+            </condition>
+            <action>
+                <type>buy</type>
+                <amount>tradeAmount</amount>
+                <currency>currency</currency>
+                <updateLossCount>reset</updateLossCount>
+            </action>
+        </rule>
+        <rule>
+            <condition>
+                <description>Check if the last digit of the current price does not match the last digit of the previous price.</description>
+                <type>digitMismatch</type>
+                <previousPrice>previousPrice</previousPrice>
+                <currentPrice>currentPrice</currentPrice>
+            </condition>
+            <action>
+                <type>sell</type>
+                <amount>tradeAmount</amount>
+                <currency>currency</currency>
+                <updateLossCount>increment</updateLossCount>
+                <checkRecovery>
+                    <maxLosses>maxLossesBeforeRecovery</maxLosses>
+                    <ifExceeded>
+                        <description>Recovery phase initiated after maximum losses reached.</description>
+                        <action>
+                            <type>recover</type>
+                            <amount>tradeAmount</amount>
+                            <currency>currency</currency>
+                        </action>
+                    </ifExceeded>
+                </checkRecovery>
+            </action>
+        </rule>
+    </rules>
+    <execution>
+        <strategy>
+            <type>realTime</type>
+            <dataSource>marketDataFeed</dataSource>
+            <updateInterval>1</updateInterval>
+        </strategy>
+    </execution>
+</tradingStrategy>
+</xml>
